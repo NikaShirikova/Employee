@@ -1,11 +1,11 @@
-package service
+package postgresql
 
 import (
-	"Employee/internal/database/postgresql"
 	"Employee/internal/module"
+	"gorm.io/gorm"
 )
 
-type ListServ interface {
+type ListDB interface {
 	AddEmployee(*module.Employee) (uint, error)
 	GetIDCOmpanyByName(string) uint
 	GetIDCDepartmentByName(string) uint
@@ -18,12 +18,12 @@ type ListServ interface {
 	GetListEmployeeByDepartment(string) (module.Employee, error)
 }
 
-type Service struct {
-	ListServ
+type Repository struct {
+	ListDB
 }
 
-func NewService(repos *postgresql.Repository) *Service {
-	return &Service{
-		ListServ: NewListService(repos.ListDB),
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{
+		ListDB: NewListPostgres(db),
 	}
 }

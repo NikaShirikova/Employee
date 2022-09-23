@@ -2,29 +2,65 @@ package main
 
 import (
 	"Employee/internal/database/postgresql"
-	"Employee/internal/module"
+	"Employee/internal/handler"
+	"Employee/internal/service"
+	"Employee/server"
+	"context"
 	"fmt"
-	"gorm.io/gorm"
+	"github.com/spf13/viper"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	db := postgresql.Init()
-	employee := &module.Employee{
-		Name:         "Roman",
-		Surname:      "Toropkin",
-		Phone:        "89995550202",
-		Passport:     module.Passport{PassType: "РФ", Number: "8989565656"},
-		DepartmentID: 1,
+	if err := initConfig(); err != nil {
+		panic("Error initializing config")
 	}
 
-	result := AddEmployee(employee, db)
-	fmt.Println("ID добавленного сотрудника: ", result)
+	cfg := postgresql.Config{
+		Host:        viper.GetString("db.host"),
+		Username:    viper.GetString("db.username"),
+		Password:    viper.GetString("db.password"),
+		DBName:      viper.GetString("db.dbname"),
+		SSLMode:     viper.GetString("db.sslmode"),
+		TablePrefix: viper.GetString("db.tableprefix"),
+	}
+	db, err := postgresql.Init(cfg)
+	if err != nil {
+		panic("Connect to database fatal")
+	}
+
+	repos := postgresql.NewRepository(db)
+	services := service.NewService(repos)
+	handlers := handler.NewHandler(services)
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	srv := new(server.Server)
+	go func() {
+		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	<-done
+	fmt.Println("Server stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer func() {
+		cancel()
+	}()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		panic("Server shutdown failed")
+	}
 }
 
-func AddEmployee(employee *module.Employee, db *gorm.DB) uint {
-	result := db.Create(&employee)
-	if result.Error != nil {
-		panic("Failed to add employee")
-	}
-	return employee.ID
+func initConfig() error {
+	viper.AddConfigPath("config")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }
