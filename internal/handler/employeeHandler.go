@@ -4,6 +4,7 @@ import (
 	"Employee/internal/module"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
@@ -11,7 +12,9 @@ import (
 func (h *Handler) AddEmpl(c *gin.Context) {
 	var input module.Employee
 	if err := c.BindJSON(&input); err != nil {
-		fmt.Println("Error get data")
+		LoggerZap.Error(
+			"Error when trying to get employee data to add",
+			zap.Error(err))
 		return
 	}
 
@@ -29,12 +32,16 @@ func (h *Handler) AddEmpl(c *gin.Context) {
 func (h *Handler) DeleteEmpl(c *gin.Context) {
 	emplId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		fmt.Println("Error get data")
+		LoggerZap.Error(
+			"Error when trying to delete employee",
+			zap.Error(err))
+		return
 	}
 
 	err = h.services.ListServ.DeleteEmployee(uint(emplId))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
+		return
 	}
 
 	c.JSON(http.StatusOK, statusResponse{"ok"})
@@ -43,7 +50,9 @@ func (h *Handler) DeleteEmpl(c *gin.Context) {
 func (h *Handler) UpdateEmpl(c *gin.Context) {
 	var input module.Employee
 	if err := c.BindJSON(&input); err != nil {
-		fmt.Println("Error get data")
+		LoggerZap.Error(
+			"Error when trying to update employee data",
+			zap.Error(err))
 		return
 	}
 
@@ -84,5 +93,4 @@ func (h *Handler) GetDepartment(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusOK, empl)
 	}
-
 }

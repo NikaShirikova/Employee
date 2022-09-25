@@ -6,8 +6,8 @@ import (
 	"Employee/internal/service"
 	"Employee/server"
 	"context"
-	"fmt"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,8 +15,11 @@ import (
 )
 
 func main() {
+	LoggerZap, _ := zap.NewProduction()
+	defer LoggerZap.Sync()
+
 	if err := initConfig(); err != nil {
-		panic("Error initializing config")
+		LoggerZap.Fatal("Error initializing config ", zap.String("error ", err.Error()))
 	}
 
 	cfg := postgresql.Config{
@@ -29,7 +32,7 @@ func main() {
 	}
 	db, err := postgresql.Init(cfg)
 	if err != nil {
-		panic("Connect to database fatal")
+		LoggerZap.Fatal("Connect or initialize to database fatal ", zap.String("error ", err.Error()))
 	}
 
 	repos := postgresql.NewRepository(db)
@@ -42,12 +45,12 @@ func main() {
 	srv := new(server.Server)
 	go func() {
 		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-			panic(err.Error())
+			LoggerZap.Fatal("Start server to fatal ", zap.String("error ", err.Error()))
 		}
 	}()
 
 	<-done
-	fmt.Println("Server stopped")
+	LoggerZap.Info("Server stopped")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer func() {
@@ -55,7 +58,7 @@ func main() {
 	}()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		panic("Server shutdown failed")
+		LoggerZap.Fatal("Server shutdown failed ", zap.String("error ", err.Error()))
 	}
 }
 

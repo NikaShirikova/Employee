@@ -1,8 +1,8 @@
 package server
 
 import (
+	handle "Employee/internal/handler"
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -19,7 +19,7 @@ func (s *Server) Run(port string, handler http.Handler) error {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	fmt.Println("Server started")
+	handle.LoggerZap.Info("Server started")
 	return s.httpServer.ListenAndServe()
 }
 
