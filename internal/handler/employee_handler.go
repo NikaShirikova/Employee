@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"Employee/internal/module"
+	"employee/internal/module"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -12,13 +12,14 @@ import (
 func (h *Handler) AddEmpl(c *gin.Context) {
 	var input module.Employee
 	if err := c.BindJSON(&input); err != nil {
-		LoggerZap.Error(
+		h.log.Error(
 			"Error when trying to get employee data to add",
 			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 		return
 	}
 
-	emplId, err := h.services.ListServ.AddEmployee(&input)
+	emplId, err := h.services.Serv.AddEmployee(&input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 		return
@@ -32,13 +33,14 @@ func (h *Handler) AddEmpl(c *gin.Context) {
 func (h *Handler) DeleteEmpl(c *gin.Context) {
 	emplId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		LoggerZap.Error(
+		h.log.Error(
 			"Error when trying to delete employee",
 			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 		return
 	}
 
-	err = h.services.ListServ.DeleteEmployee(uint(emplId))
+	err = h.services.Serv.DeleteEmployee(uint(emplId))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 		return
@@ -50,16 +52,17 @@ func (h *Handler) DeleteEmpl(c *gin.Context) {
 func (h *Handler) UpdateEmpl(c *gin.Context) {
 	var input module.Employee
 	if err := c.BindJSON(&input); err != nil {
-		LoggerZap.Error(
+		h.log.Error(
 			"Error when trying to update employee data",
 			zap.Error(err))
+		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 		return
 	}
 
-	err := h.services.ListServ.UpdateEmployee(&input)
-	errPass := h.services.ListServ.UpdatePassport(&input.Passport)
-	errComp := h.services.ListServ.UpdateCompany(&input.Company)
-	errDep := h.services.ListServ.UpdateDepartment(&input.Department)
+	err := h.services.Serv.UpdateEmployee(&input)
+	errPass := h.services.Serv.UpdatePassport(&input.Passport)
+	errComp := h.services.Serv.UpdateCompany(&input.Company)
+	errDep := h.services.Serv.UpdateDepartment(&input.Department)
 
 	if err != nil && errPass != nil && errComp != nil && errDep != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
@@ -72,7 +75,7 @@ func (h *Handler) UpdateEmpl(c *gin.Context) {
 func (h *Handler) GetCompany(c *gin.Context) {
 	name := c.Param("nameCompany")
 
-	empl, err := h.services.ListServ.GetListEmployeeByCompany(name)
+	empl, err := h.services.Serv.GetListEmployeeByCompany(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 	} else if empl.ID == 0 {
@@ -85,7 +88,7 @@ func (h *Handler) GetCompany(c *gin.Context) {
 func (h *Handler) GetDepartment(c *gin.Context) {
 	name := c.Param("nameDepartment")
 
-	empl, err := h.services.ListServ.GetListEmployeeByDepartment(name)
+	empl, err := h.services.Serv.GetListEmployeeByDepartment(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, statusResponse{"error"})
 	} else if empl.ID == 0 {

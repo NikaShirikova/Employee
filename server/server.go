@@ -1,17 +1,18 @@
 package server
 
 import (
-	handle "Employee/internal/handler"
 	"context"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
 
 type Server struct {
+	log        *zap.Logger
 	httpServer *http.Server
 }
 
-func (s *Server) Run(port string, handler http.Handler) error {
+func (s *Server) Run(port string, handler http.Handler, log *zap.Logger) error {
 	s.httpServer = &http.Server{
 		Addr:         ":" + port,
 		Handler:      handler,
@@ -19,7 +20,9 @@ func (s *Server) Run(port string, handler http.Handler) error {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	handle.LoggerZap.Info("Server started")
+	s.log = log.Named("server")
+
+	s.log.Info("Server started")
 	return s.httpServer.ListenAndServe()
 }
 

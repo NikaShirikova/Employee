@@ -1,11 +1,11 @@
 package main
 
 import (
-	"Employee/internal/database/postgresql"
-	"Employee/internal/handler"
-	"Employee/internal/service"
-	"Employee/server"
 	"context"
+	"employee/internal/database/postgresql"
+	"employee/internal/handler"
+	"employee/internal/service"
+	"employee/server"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"os"
@@ -15,7 +15,11 @@ import (
 )
 
 func main() {
-	LoggerZap, _ := zap.NewProduction()
+	LoggerZap, err := zap.NewProduction()
+	if err != nil {
+		return
+	}
+
 	defer LoggerZap.Sync()
 
 	if err := initConfig(); err != nil {
@@ -35,16 +39,16 @@ func main() {
 		LoggerZap.Fatal("Connect or initialize to database fatal ", zap.String("error ", err.Error()))
 	}
 
-	repos := postgresql.NewRepository(db)
+	repos := postgresql.NewRepository(db, LoggerZap)
 	services := service.NewService(repos)
-	handlers := handler.NewHandler(services)
+	handlers := handler.NewHandler(services, LoggerZap)
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	srv := new(server.Server)
 	go func() {
-		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
+		if err := srv.Run(viper.GetString("port"), handlers.InitRoutes(), LoggerZap); err != nil {
 			LoggerZap.Fatal("Start server to fatal ", zap.String("error ", err.Error()))
 		}
 	}()

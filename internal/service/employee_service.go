@@ -1,15 +1,15 @@
 package service
 
 import (
-	"Employee/internal/database/postgresql"
-	"Employee/internal/module"
+	"employee/internal/database/postgresql"
+	"employee/internal/module"
 )
 
 type ListService struct {
-	repos postgresql.ListDB
+	repos postgresql.DB
 }
 
-func NewListService(repos postgresql.ListDB) *ListService {
+func NewListService(repos postgresql.DB) *ListService {
 	return &ListService{repos: repos}
 }
 

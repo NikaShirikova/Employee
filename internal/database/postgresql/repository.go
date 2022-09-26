@@ -1,11 +1,12 @@
 package postgresql
 
 import (
-	"Employee/internal/module"
+	"employee/internal/module"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
-type ListDB interface {
+type DB interface {
 	AddEmployee(*module.Employee) (uint, error)
 	GetIDCOmpanyByName(string) uint
 	GetIDCDepartmentByName(string) uint
@@ -19,11 +20,11 @@ type ListDB interface {
 }
 
 type Repository struct {
-	ListDB
+	DB
 }
 
-func NewRepository(db *gorm.DB) *Repository {
+func NewRepository(db *gorm.DB, log *zap.Logger) *Repository {
 	return &Repository{
-		ListDB: NewListPostgres(db),
+		DB: NewListPostgres(db, log),
 	}
 }

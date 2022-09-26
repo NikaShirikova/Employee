@@ -1,11 +1,11 @@
 package service
 
 import (
-	"Employee/internal/database/postgresql"
-	"Employee/internal/module"
+	"employee/internal/database/postgresql"
+	"employee/internal/module"
 )
 
-type ListServ interface {
+type Serv interface {
 	AddEmployee(*module.Employee) (uint, error)
 	GetIDCOmpanyByName(string) uint
 	GetIDCDepartmentByName(string) uint
@@ -19,11 +19,11 @@ type ListServ interface {
 }
 
 type Service struct {
-	ListServ
+	Serv
 }
 
 func NewService(repos *postgresql.Repository) *Service {
 	return &Service{
-		ListServ: NewListService(repos.ListDB),
+		Serv: NewListService(repos.DB),
 	}
 }

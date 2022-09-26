@@ -1,16 +1,20 @@
 package handler
 
 import (
-	"Employee/internal/service"
+	"employee/internal/service"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
+	log      *zap.Logger
 	services *service.Service
 }
 
-func NewHandler(services *service.Service) *Handler {
-	return &Handler{services: services}
+func NewHandler(services *service.Service, log *zap.Logger) *Handler {
+	return &Handler{
+		services: services,
+		log:      log.Named("handler")}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {

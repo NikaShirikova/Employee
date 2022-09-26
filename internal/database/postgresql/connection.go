@@ -1,7 +1,7 @@
 package postgresql
 
 import (
-	"Employee/internal/module"
+	"employee/internal/module"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,8 +16,6 @@ type Config struct {
 	SSLMode     string
 	TablePrefix string
 }
-
-var db *gorm.DB
 
 func Init(cfg Config) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=%s",
